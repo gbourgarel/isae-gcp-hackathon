@@ -1,5 +1,7 @@
-Awesome markdown file to describe what your app does and how to use it :)
+You have pictures and you don't know what it represents?
 
-Once everything works you should definitely work on display and usability (and edit this :))
+This app can help! Thanks to Deep Learning, it is possible to recognize objects and animals on any picture.
 
-You can check the inference notebook from the app team to get ideas for plotting
+You just need to upload the picture, and we'll do everythink else!
+
+*PS: The privacy of your picture is guaranted. Perhaps. Or maybe not.*

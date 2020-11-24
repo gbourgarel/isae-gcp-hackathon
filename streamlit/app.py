@@ -92,7 +92,7 @@ def make_request(model_url: str, model: str, image: Image) -> Result:
 
 # ---- Streamlit App ---
 
-st.title("NAME ME BECAUSE I AM AWESOME")
+st.title("WHAT'S IN YOUR PICTURE?")
 
 with open("APP.md") as f:
     st.markdown(f.read())
@@ -119,12 +119,13 @@ test_mode_on = st.sidebar.checkbox(label="Test Mode - Generate dummy answer", va
 # --- Main window
 
 st.markdown("## Inputs")
-st.markdown("Describe something... You can also add things like confidence slider etc...")
+st.markdown('We have loaded in our app three models that can scan any picture you want. Just choose a model and upload your picture...')
+#st.markdown("Describe something... You can also add things like confidence slider etc...")
 
 # Here we should be able to choose between ["yolov5s", "yolov5m", "yolov5l"], perhaps a radio button with the three choices ?
-model_name = st.radio("Choose", ['yolov5s', 'yolov5m', 'yolov5l'])
+model_name = st.radio("Choose a model", ['yolov5s', 'yolov5m', 'yolov5l'])
 
-image_file = st.file_uploader("Upload a PNG image", type=([".png", ".jpg", "jpeg"]))
+image_file = st.file_uploader("Upload an image", type=([".png", ".jpg", "jpeg"]))
 
 # Converting image, this is done for you :)
 if image_file is not None:
@@ -193,15 +194,15 @@ if st.button(label="SEND PAYLOAD"):
 
     st.markdown("## Display")
 
-    st.markdown("Make something pretty, draw polygons and confidence..., here's an ugly output")
+#    st.markdown("Make something pretty, draw polygons and confidence..., here's an ugly output")
     
     image = draw_preds(image, result)
 
-    st.image(image, width=512, caption="Uploaded Image")
+    st.image(image, width=512, caption="Output of {} on your picture".format(result.model))
 
     st.text("Model : {}".format(result.model))
     st.text("Processing time : {}s".format(result.time))
 
-    for detection in result.detections:
-        st.json(detection.json())
+#    for detection in result.detections:
+#        st.json(detection.json())
         
