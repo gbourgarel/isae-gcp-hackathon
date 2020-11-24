@@ -6,7 +6,7 @@ services:
       - "8000:8000"
     hostname: yolo
   streamlit:
-    image: "eu.gcr.io/hackathon01-296608/streamlit:1.0"
+    image: "eu.gcr.io/hackathon01-296608/streamlit:2.0"
     ports:
       - "8501:8501"
     hostname: streamlit

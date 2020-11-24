@@ -100,7 +100,7 @@ with open("APP.md") as f:
 # --- Sidebar ---
 # defines an h1 header
 
-model_url = st.sidebar.text_input(label="Cluster URL", value="http://localhost:8000")
+model_url = st.sidebar.text_input(label="Cluster URL", value="http://api_model:8000")
 
 _model_url = model_url.strip("/")
 
