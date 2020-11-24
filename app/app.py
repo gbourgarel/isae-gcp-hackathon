@@ -31,21 +31,31 @@ class Result(BaseModel):
 
 # !!!! FILL ME
 def parse_predictions(prediction: np.ndarray, classes: [str]) -> List[Detection]:
-    raise NotImplementedError
+    detections = []
+    for i in range(len(prediction)):        
+        box = prediction[i, :4]
+        score = float(prediction[i, 4])
+        class_idx = int(prediction[i, 5])
+        predicted_class = classes[class_idx]
+        detections.append(Detection(x_min = box[0], y_min = box[3], x_max = box[2], y_max = box[1], class_name = predicted_class, confidence = score))
+    return detections
 
 # !!!! FILL ME
 def load_model(model_name: str):
-    """"""
-    raise NotImplementedError
+    # Load model from torch
+    model = torch.hub.load("ultralytics/yolov5", model_name, pretrained=True)
+    # Evaluation mode + Non maximum threshold
+    model = model.fuse().eval()
+    # for autoshaping of PIL/cv2/np inputs and NMS
+    model = model.autoshape()
+    return model
 
 
 MODEL_NAMES = ["yolov5s", "yolov5m", "yolov5l"]
 
 app = FastAPI(
-    title="NAME ME",
-    description="""
-                DESCRIBE ME
-                """,
+    title="I'm a fast API, YEAH",
+    description="""I'm very very fast API""",
     version="1.0",
 )
 
@@ -53,7 +63,9 @@ app = FastAPI(
 # This is a dictionnary that must contains a model for each key (model names), fill load model
 # example: for model_name in MODEL_NAMES: MODELS[model_name] = load_model(model_name)
 # You can also lazily load models only when they are called to avoid holding 3 models in memory
-MODELS = ...
+MODELS = {}
+for m in MODEL_NAMES:
+    MODELS[m] = load_model(m)
 
 
 @app.get("/", description="return the title", response_description="FILL ME", response_model=str)
@@ -102,15 +114,17 @@ def predict(inputs: Input) -> Result:
     # Inference
 
     # RUN THE PREDICTION, TIME IT
-    predictions = ...
+    t0 = time.time()
+    predictions = model(image, size=640)  # includes NMS
+    t1 = time.time()
+    t_res = t1 -t0
 
     # Post processing
     classes = predictions.names
     predictions = predictions.xyxy[0].numpy()
 
     # Create a list of [DETECTIONS] objects that match the detection class above, using the parse_predictions method
-    detections = ...
-
-    result = Result(detections=..., time=..., model=...)
+    detections = parse_predictions(predictions, classes)
+    result = Result(detections=detections, time=t_res, model=model_name)
 
     return result
