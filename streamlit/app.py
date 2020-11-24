@@ -6,6 +6,9 @@ import base64
 from pydantic import BaseModel
 from typing import List
 import random
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import  ImageDraw, ImageFont
 
 # ---- Functions ---
 
@@ -121,13 +124,73 @@ st.markdown("Describe something... You can also add things like confidence slide
 # Here we should be able to choose between ["yolov5s", "yolov5m", "yolov5l"], perhaps a radio button with the three choices ?
 model_name = st.radio("Choose", ['yolov5s', 'yolov5m', 'yolov5l'])
 
-image_file = st.file_uploader("Upload a PNG image", type=([".png"]))
+image_file = st.file_uploader("Upload a PNG image", type=([".png", ".jpg"]))
 
 # Converting image, this is done for you :)
 if image_file is not None:
     image_file.seek(0)
     image = image_file.read()
     image = Image.open(io.BytesIO(image))
+    img_array = np.array(image)
+
+    
+def draw_preds(image, result):
+
+    image = image.copy()
+
+#    colors = plt.cm.get_cmap("viridis", len(class_names)).colors
+#    colors = (colors[:, :3] * 255.0).astype(np.uint8)
+    
+    color = (255, 0, 0)
+
+    font = ImageFont.truetype(font="DejaVuSans.ttf", size=np.floor(3e-2 * image.size[1] + 0.5).astype("int32"))
+    thickness = (image.size[0] + image.size[1]) // 300
+
+    for detection in result.detections:
+        box = [detection.x_min, detection.y_min, detection.x_max, detection.y_max]
+        score = float(detection.confidence)
+        predicted_class = detection.class_name
+
+        label = "{} {:.2f}".format(predicted_class, score)
+
+        draw = ImageDraw.Draw(image)
+        label_size = draw.textsize(label, font)
+
+        left, top, right, bottom = box
+        top = max(0, np.floor(top + 0.5).astype("int32"))
+        left = max(0, np.floor(left + 0.5).astype("int32"))
+        bottom = min(image.size[1], np.floor(bottom + 0.5).astype("int32"))
+        right = min(image.size[0], np.floor(right + 0.5).astype("int32"))
+        print(label, (left, top), (right, bottom))
+
+        if top - label_size[1] >= 0:
+            text_origin = np.array([left, top - label_size[1]])
+        else:
+            text_origin = np.array([left, top + 1])
+
+        # My kingdom for a good redistributable image drawing library.
+        for r in range(thickness):
+            draw.rectangle([left + r, top + r, right - r, bottom - r], outline=color)
+#            draw.rectangle([left + r, top + r, right - r, bottom - r], outline=tuple(colors[class_idx]))
+        draw.rectangle([tuple(text_origin), tuple(text_origin + label_size)], fill=color)
+#        draw.rectangle([tuple(text_origin), tuple(text_origin + label_size)], fill=tuple(colors[class_idx]))
+
+        draw.text(text_origin, label, fill=(0, 0, 0), font=font)
+        del draw
+
+    return image
+
+def draw_image_with_boxes(image, boxes, header="", description=""):
+    # Superpose the semi-transparent object detection boxes.
+    image_with_boxes = image.astype(np.float64)
+    for _, (xmin, ymin, xmax, ymax) in boxes.iterrows():
+        image_with_boxes[int(ymin):int(ymax),int(xmin):int(xmax),:] += [255, 0, 0]
+        image_with_boxes[int(ymin):int(ymax),int(xmin):int(xmax),:] /= 2
+
+    # Draw the header and image.
+#    st.subheader(header)
+#    st.markdown(description)
+    st.image(image_with_boxes.astype(np.uint8), use_column_width=True)
 
 if st.button(label="SEND PAYLOAD"):
 
@@ -136,12 +199,19 @@ if st.button(label="SEND PAYLOAD"):
         result = make_dummy_request(model_url=model_url, model=model_name, image=image)
     else:
         result = make_request(model_url=model_url, model=model_name, image=image)
+        print(result.detections)
 
     st.balloons()
 
     st.markdown("## Display")
 
     st.markdown("Make something pretty, draw polygons and confidence..., here's an ugly output")
+    
+#    boxes = []
+#    for d in result.detections:
+#        boxes.append([d.x_min, d.y_min, d.x_max, d.y_max])
+    image = draw_preds(image, result)
+#    draw_image_with_boxes(img_array, boxes=boxes)#, header=d['class_name'], description=d['confidence'])
 
     st.image(image, width=512, caption="Uploaded Image")
 
@@ -150,3 +220,4 @@ if st.button(label="SEND PAYLOAD"):
 
     for detection in result.detections:
         st.json(detection.json())
+        
