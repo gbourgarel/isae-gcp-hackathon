@@ -16,7 +16,7 @@ Packager un modèle de machine learning derrière une webapplication pour pouvoi
 
 ### Tester son application
 
-Dans un terminal, vous pouvez faire `uvicon app:app --reload` pour lancer la webbapp FastAPI qui sert le modèle,
+Dans un terminal, vous pouvez faire `uvicorn app:app --reload` pour lancer la webbapp FastAPI qui sert le modèle,
 
 Ensuite vous pouvez lancer le notebook tests pour vérifier que tout marche
 
