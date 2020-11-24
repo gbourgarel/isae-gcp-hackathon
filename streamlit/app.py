@@ -119,10 +119,9 @@ st.markdown("## Inputs")
 st.markdown("Describe something... You can also add things like confidence slider etc...")
 
 # Here we should be able to choose between ["yolov5s", "yolov5m", "yolov5l"], perhaps a radio button with the three choices ?
-model_name = ...
+model_name = st.radio("Choose", ['yolov5s', 'yolov5m', 'yolov5l'])
 
-# Here we should be able to upload a file (our image)
-image_file = ...
+image_file = st.file_uploader("Upload a PNG image", type=([".png"]))
 
 # Converting image, this is done for you :)
 if image_file is not None:
@@ -134,9 +133,9 @@ if st.button(label="SEND PAYLOAD"):
 
     if test_mode_on:
         st.warning("Simulating a dummy request to {}".format(model_url))
-        result = ...  # call the proper function
+        result = make_dummy_request(model_url=model_url, model=model_name, image=image)
     else:
-        result = ...  # call the proper function
+        result = make_request(model_url=model_url, model=model_name, image=image)
 
     st.balloons()
 
