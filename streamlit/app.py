@@ -124,7 +124,7 @@ st.markdown("Describe something... You can also add things like confidence slide
 # Here we should be able to choose between ["yolov5s", "yolov5m", "yolov5l"], perhaps a radio button with the three choices ?
 model_name = st.radio("Choose", ['yolov5s', 'yolov5m', 'yolov5l'])
 
-image_file = st.file_uploader("Upload a PNG image", type=([".png", ".jpg"]))
+image_file = st.file_uploader("Upload a PNG image", type=([".png", ".jpg", "jpeg"]))
 
 # Converting image, this is done for you :)
 if image_file is not None:
@@ -137,12 +137,13 @@ if image_file is not None:
 def draw_preds(image, result):
 
     image = image.copy()
-
-#    colors = plt.cm.get_cmap("viridis", len(class_names)).colors
-#    colors = (colors[:, :3] * 255.0).astype(np.uint8)
     
-    color = (255, 0, 0)
-
+    classes = list(set([detection.class_name for detection in result.detections]))
+    colors = {}
+    N = max(1, len(classes)-1)
+    for i, cl in enumerate(classes):
+        colors[cl] = [(255.0 * _).astype(np.uint8) for _ in plt.cm.get_cmap('spring')(i/N)]
+    
     font = ImageFont.truetype(font="DejaVuSans.ttf", size=np.floor(3e-2 * image.size[1] + 0.5).astype("int32"))
     thickness = (image.size[0] + image.size[1]) // 300
 
@@ -170,27 +171,14 @@ def draw_preds(image, result):
 
         # My kingdom for a good redistributable image drawing library.
         for r in range(thickness):
-            draw.rectangle([left + r, top + r, right - r, bottom - r], outline=color)
-#            draw.rectangle([left + r, top + r, right - r, bottom - r], outline=tuple(colors[class_idx]))
-        draw.rectangle([tuple(text_origin), tuple(text_origin + label_size)], fill=color)
-#        draw.rectangle([tuple(text_origin), tuple(text_origin + label_size)], fill=tuple(colors[class_idx]))
+            draw.rectangle([left + r, top + r, right - r, bottom - r], outline=tuple(colors[predicted_class]))
+        draw.rectangle([tuple(text_origin), tuple(text_origin + label_size)], fill=tuple(colors[predicted_class]))
 
         draw.text(text_origin, label, fill=(0, 0, 0), font=font)
         del draw
 
     return image
 
-def draw_image_with_boxes(image, boxes, header="", description=""):
-    # Superpose the semi-transparent object detection boxes.
-    image_with_boxes = image.astype(np.float64)
-    for _, (xmin, ymin, xmax, ymax) in boxes.iterrows():
-        image_with_boxes[int(ymin):int(ymax),int(xmin):int(xmax),:] += [255, 0, 0]
-        image_with_boxes[int(ymin):int(ymax),int(xmin):int(xmax),:] /= 2
-
-    # Draw the header and image.
-#    st.subheader(header)
-#    st.markdown(description)
-    st.image(image_with_boxes.astype(np.uint8), use_column_width=True)
 
 if st.button(label="SEND PAYLOAD"):
 
@@ -207,11 +195,7 @@ if st.button(label="SEND PAYLOAD"):
 
     st.markdown("Make something pretty, draw polygons and confidence..., here's an ugly output")
     
-#    boxes = []
-#    for d in result.detections:
-#        boxes.append([d.x_min, d.y_min, d.x_max, d.y_max])
     image = draw_preds(image, result)
-#    draw_image_with_boxes(img_array, boxes=boxes)#, header=d['class_name'], description=d['confidence'])
 
     st.image(image, width=512, caption="Uploaded Image")
 
